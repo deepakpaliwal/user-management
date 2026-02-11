@@ -6,12 +6,13 @@ const completedBackendFeatures = [
   'Per-IP login rate limiting',
   'Liquibase schema + seed data for users/roles',
   'Tenant service onboarding with generated API keys and tier limits',
+  'Admin user management APIs (list/get/update/delete + role assignment)',
 ];
 
 const upcomingFeatures = [
   'OAuth social login providers (Google, Meta, Microsoft)',
   'MFA via OTP/security questions',
-  'Admin dashboard (user CRUD + role assignments)',
+  'Admin dashboard UI screens for user CRUD and role workflows',
   'Complete API key lifecycle actions (rotate/revoke)',
   'Traffic analytics and alerting views',
 ];
@@ -46,6 +47,18 @@ const apiEndpoints = [
     path: '/api/v1/services',
     status: 'Implemented',
     notes: 'Lists onboarded services with tier and limits.',
+  },
+  {
+    method: 'GET',
+    path: '/api/v1/admin/users',
+    status: 'Implemented',
+    notes: 'Lists users for admin management.',
+  },
+  {
+    method: 'PUT',
+    path: '/api/v1/admin/users/{userId}',
+    status: 'Implemented',
+    notes: 'Updates account status, password, and role mappings.',
   },
 ];
 

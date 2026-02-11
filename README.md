@@ -34,6 +34,7 @@ Restart:
 - JWT token issuance (HS256) and Spring Security JWT resource-server verification.
 - In-memory login rate limiting filter per client IP.
 - `POST /api/v1/services` and `GET /api/v1/services` for initial tenant onboarding and API key generation.
+- `GET/PUT/DELETE /api/v1/admin/users` plus `GET /api/v1/admin/users/{userId}` for admin user CRUD, account state updates, password overrides, and role assignment.
 
 ## Build and test
 
