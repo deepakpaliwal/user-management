@@ -48,7 +48,7 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
             }
             counter.count++;
             if (counter.count > maxRequests) {
-                response.setStatus(HttpServletResponse.SC_TOO_MANY_REQUESTS);
+                response.setStatus(429);
                 response.setContentType("application/json");
                 response.getWriter().write("{\"error\":\"Too many login attempts\"}");
                 return;
