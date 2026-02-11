@@ -67,6 +67,8 @@ const endpointRows = [
   ['POST', '/api/v1/services', 'Onboard tenant service'],
 ];
 
+const accountStatuses = ['ACTIVE', 'LOCKED', 'DISABLED'];
+
 function Card({ title, children }) {
   return (
     <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-xl shadow-slate-950/40">
@@ -97,6 +99,30 @@ async function callApi(path, options = {}) {
   return data;
 }
 
+
+function authHeaders(loginResult) {
+  if (!loginResult?.accessToken) {
+    return {};
+  }
+  return { Authorization: `Bearer ${loginResult.accessToken}` };
+}
+
+function roleFromToken(loginResult) {
+  if (!loginResult?.accessToken) {
+    return null;
+  }
+  try {
+    const payload = JSON.parse(atob(loginResult.accessToken.split('.')[1] || ''));
+    const tokenRoles = payload.roles || [];
+    if (Array.isArray(tokenRoles) && tokenRoles.length > 0) {
+      return tokenRoles[0].replace('ROLE_', '').toLowerCase();
+    }
+  } catch (_) {
+    return null;
+  }
+  return null;
+}
+
 export default function App() {
   const [selectedRole, setSelectedRole] = useState('guest');
   const [activeSection, setActiveSection] = useState('home');
@@ -113,6 +139,7 @@ export default function App() {
 
   const [adminUsers, setAdminUsers] = useState([]);
   const [servicesData, setServicesData] = useState([]);
+  const [adminEdit, setAdminEdit] = useState({});
 
   const availableActions = useMemo(() => roleActions[selectedRole] ?? roleActions.guest, [selectedRole]);
 
@@ -123,13 +150,20 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (selectedRole === 'admin' || selectedRole === 'developer') {
-      callApi('/api/v1/admin/users', { headers: loginResult?.accessToken ? { Authorization: `Bearer ${loginResult.accessToken}` } : {} })
-        .then(setAdminUsers)
-        .catch(() => {});
-      callApi('/api/v1/services', { headers: loginResult?.accessToken ? { Authorization: `Bearer ${loginResult.accessToken}` } : {} })
-        .then(setServicesData)
-        .catch(() => {});
+    if (!loginResult?.accessToken) {
+      return;
+    }
+
+    const effectiveRole = roleFromToken(loginResult) || selectedRole;
+    if (effectiveRole === 'admin') {
+      onLoadAdmin();
+      onLoadServices();
+      setActiveSection('admin');
+      return;
+    }
+
+    if (effectiveRole === 'developer' || effectiveRole === 'manager' || effectiveRole === 'support') {
+      onLoadServices();
     }
   }, [selectedRole, loginResult]);
 
@@ -159,7 +193,9 @@ export default function App() {
         body: JSON.stringify(loginForm),
       });
       setLoginResult(data);
-      setActiveSection(selectedRole === 'admin' ? 'admin' : 'stats');
+      const effectiveRole = roleFromToken(data) || selectedRole;
+      setSelectedRole(effectiveRole);
+      setActiveSection(effectiveRole === 'admin' ? 'admin' : 'stats');
     } catch (err) {
       setError(err.message);
     }
@@ -169,7 +205,7 @@ export default function App() {
     setError('');
     try {
       const data = await callApi('/api/v1/admin/users', {
-        headers: { Authorization: `Bearer ${loginResult?.accessToken || ''}` },
+        headers: authHeaders(loginResult),
       });
       setAdminUsers(data);
     } catch (err) {
@@ -181,7 +217,7 @@ export default function App() {
     setError('');
     try {
       const data = await callApi('/api/v1/services', {
-        headers: { Authorization: `Bearer ${loginResult?.accessToken || ''}` },
+        headers: authHeaders(loginResult),
       });
       setServicesData(data);
     } catch (err) {
@@ -231,6 +267,72 @@ export default function App() {
         body: JSON.stringify(recoveryReset),
       });
       setRecoveryResult('Password reset successful. You can login with new password.');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+
+
+  const onAdminEditChange = (userId, field, value) => {
+    setAdminEdit((prev) => ({
+      ...prev,
+      [userId]: {
+        ...prev[userId],
+        [field]: value,
+      },
+    }));
+  };
+
+  const onAdminSave = async (user) => {
+    setError('');
+    try {
+      const draft = adminEdit[user.id] || {};
+      const payload = {
+        accountStatus: draft.accountStatus || user.accountStatus,
+      };
+
+      if (draft.password && draft.password.trim()) {
+        payload.password = draft.password;
+      }
+
+      if (draft.roleCodes && draft.roleCodes.trim()) {
+        payload.roleCodes = draft.roleCodes
+          .split(',')
+          .map((code) => code.trim())
+          .filter(Boolean);
+      }
+
+      await callApi(`/api/v1/admin/users/${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeaders(loginResult),
+        },
+        body: JSON.stringify(payload),
+      });
+      await onLoadAdmin();
+      setAdminEdit((prev) => ({
+        ...prev,
+        [user.id]: {
+          accountStatus: payload.accountStatus,
+          password: '',
+          roleCodes: payload.roleCodes ? payload.roleCodes.join(', ') : '',
+        },
+      }));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const onAdminDelete = async (userId) => {
+    setError('');
+    try {
+      await callApi(`/api/v1/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: authHeaders(loginResult),
+      });
+      await onLoadAdmin();
     } catch (err) {
       setError(err.message);
     }
@@ -361,8 +463,64 @@ export default function App() {
                 <button onClick={onLoadAdmin} className="rounded-lg bg-cyan-700 px-4 py-2 text-sm">Load users</button>
                 <button onClick={onLoadServices} className="rounded-lg border border-slate-600 px-4 py-2 text-sm">Load services</button>
               </div>
-              <div className="max-h-40 overflow-auto rounded-lg border border-slate-700 bg-slate-800/70 p-2 text-xs">
-                {adminUsers.length === 0 ? 'No users loaded yet.' : adminUsers.map((u) => `${u.username} (${u.accountStatus})`).join(' | ')}
+
+              {!loginResult?.accessToken ? (
+                <p className="rounded-lg border border-amber-600/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+                  Please login with an admin account to use user management actions.
+                </p>
+              ) : null}
+
+              <div className="max-h-96 overflow-auto rounded-lg border border-slate-700 bg-slate-800/70 p-2 text-xs">
+                {adminUsers.length === 0 ? (
+                  'No users loaded yet.'
+                ) : (
+                  <div className="space-y-2">
+                    {adminUsers.map((u) => {
+                      const draft = adminEdit[u.id] || {
+                        accountStatus: u.accountStatus,
+                        password: '',
+                        roleCodes: (u.roles || []).join(', '),
+                      };
+
+                      return (
+                        <div key={u.id} className="rounded-lg border border-slate-700 bg-slate-900/60 p-3 space-y-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-sm text-slate-200">#{u.id} {u.username} ({u.email})</p>
+                            <p className="text-[11px] text-slate-400">Failed logins: {u.failedLoginAttempts}</p>
+                          </div>
+                          <div className="grid gap-2 sm:grid-cols-3">
+                            <select
+                              className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-2"
+                              value={draft.accountStatus}
+                              onChange={(e) => onAdminEditChange(u.id, 'accountStatus', e.target.value)}
+                            >
+                              {accountStatuses.map((status) => (
+                                <option key={status} value={status}>{status}</option>
+                              ))}
+                            </select>
+                            <input
+                              className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-2"
+                              placeholder="Roles (comma-separated)"
+                              value={draft.roleCodes}
+                              onChange={(e) => onAdminEditChange(u.id, 'roleCodes', e.target.value)}
+                            />
+                            <input
+                              className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-2"
+                              type="password"
+                              placeholder="New password (optional)"
+                              value={draft.password}
+                              onChange={(e) => onAdminEditChange(u.id, 'password', e.target.value)}
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button type="button" onClick={() => onAdminSave(u)} className="rounded-lg bg-emerald-700 px-3 py-1.5">Save</button>
+                            <button type="button" onClick={() => onAdminDelete(u.id)} className="rounded-lg border border-rose-500/70 px-3 py-1.5 text-rose-200">Delete</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           </Card>
