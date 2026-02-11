@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: uums-api
+  profiles:
+    active: local
+  datasource:
+    url: jdbc:h2:mem:uums_local;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+uums:
+  security:
+    jwt:
+      secret: "ReplaceThisWithAtLeast32CharSecretKey123456"
+      expiration-seconds: 3600
+      refresh-expiration-seconds: 1209600
+    max-failed-attempts: 5
+    rate-limit:
+      max-requests: 30
+      window-seconds: 60
+    mfa:
+      challenge-ttl-seconds: 300
+
+server:
+  port: 8080
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/uums_dev
+    username: uums
+    password: uums
+
+---
+spring:
+  config:
+    activate:
+      on-profile: uat
+  datasource:
+    url: jdbc:postgresql://localhost:5432/uums_uat
+    username: uums
+    password: uums
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:postgresql://localhost:5432/uums_prod
+    username: uums
+    password: uums
