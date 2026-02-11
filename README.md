@@ -26,6 +26,13 @@ Restart:
 ./scripts/restart.sh
 ```
 
+## Implemented in current iteration
+
+- `POST /api/v1/auth/register` with Bean Validation for username/email/password and default `ROLE_USER` assignment.
+- `POST /api/v1/auth/login` with account lockout after configurable failed-attempt threshold.
+- JWT token issuance (HS256) and Spring Security JWT resource-server verification.
+- In-memory login rate limiting filter per client IP.
+
 ## Build and test
 
 ```bash

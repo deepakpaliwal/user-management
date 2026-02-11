@@ -15,6 +15,16 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
+uums:
+  security:
+    jwt:
+      secret: "ReplaceThisWithAtLeast32CharSecretKey123456"
+      expiration-seconds: 3600
+    max-failed-attempts: 5
+    rate-limit:
+      max-requests: 30
+      window-seconds: 60
+
 server:
   port: 8080
 
