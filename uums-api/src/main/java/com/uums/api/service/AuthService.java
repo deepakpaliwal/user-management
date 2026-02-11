@@ -66,24 +66,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByUsername(request.username())
-                .orElseThrow(() -> new AuthException("Invalid username or password"));
-
-        if (user.getAccountStatus() == AccountStatus.LOCKED || user.getAccountStatus() == AccountStatus.DISABLED) {
-            throw new AuthException("Account is not active");
-        }
-
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
-            if (user.getFailedLoginAttempts() >= maxFailedAttempts) {
-                user.setAccountStatus(AccountStatus.LOCKED);
-            }
-            userRepository.save(user);
-            throw new AuthException("Invalid username or password");
-        }
-
-        user.setFailedLoginAttempts(0);
-        userRepository.save(user);
+        User user = validatePrimaryCredentials(request.username(), request.password());
         return buildTokenResponse(user);
     }
 
@@ -100,6 +83,42 @@ public class AuthService {
         } catch (JwtException ex) {
             throw new AuthException("Invalid refresh token");
         }
+    }
+
+    @Transactional
+    public User validatePrimaryCredentials(String username, String password) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AuthException("Invalid username or password"));
+
+        if (user.getAccountStatus() == AccountStatus.LOCKED || user.getAccountStatus() == AccountStatus.DISABLED) {
+            throw new AuthException("Account is not active");
+        }
+
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+            user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
+            if (user.getFailedLoginAttempts() >= maxFailedAttempts) {
+                user.setAccountStatus(AccountStatus.LOCKED);
+            }
+            userRepository.save(user);
+            throw new AuthException("Invalid username or password");
+        }
+
+        user.setFailedLoginAttempts(0);
+        return userRepository.save(user);
+    }
+
+    @Transactional(readOnly = true)
+    public User getActiveUserByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AuthException("Invalid user"));
+        if (user.getAccountStatus() != AccountStatus.ACTIVE) {
+            throw new AuthException("Account is not active");
+        }
+        return user;
+    }
+
+    public AuthResponse issueTokens(User user) {
+        return buildTokenResponse(user);
     }
 
     private AuthResponse buildTokenResponse(User user) {

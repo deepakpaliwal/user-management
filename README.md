@@ -35,6 +35,7 @@ Restart:
 - In-memory login rate limiting filter per client IP.
 - `POST /api/v1/services` and `GET /api/v1/services` for initial tenant onboarding and API key generation.
 - `GET/PUT/DELETE /api/v1/admin/users` plus `GET /api/v1/admin/users/{userId}` for admin user CRUD, account state updates, password overrides, and role assignment.
+- `POST /api/v1/auth/mfa/challenge` and `POST /api/v1/auth/mfa/verify` for two-step authentication via OTP challenge.
 
 ## Build and test
 

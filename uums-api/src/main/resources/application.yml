@@ -25,6 +25,8 @@ uums:
     rate-limit:
       max-requests: 30
       window-seconds: 60
+    mfa:
+      challenge-ttl-seconds: 300
 
 server:
   port: 8080

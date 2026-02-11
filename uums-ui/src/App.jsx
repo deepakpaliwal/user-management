@@ -7,6 +7,7 @@ const completedBackendFeatures = [
   'Liquibase schema + seed data for users/roles',
   'Tenant service onboarding with generated API keys and tier limits',
   'Admin user management APIs (list/get/update/delete + role assignment)',
+  'MFA challenge + OTP verification endpoints for two-step auth',
 ];
 
 const upcomingFeatures = [
@@ -59,6 +60,18 @@ const apiEndpoints = [
     path: '/api/v1/admin/users/{userId}',
     status: 'Implemented',
     notes: 'Updates account status, password, and role mappings.',
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/auth/mfa/challenge',
+    status: 'Implemented',
+    notes: 'Starts MFA challenge after primary credential validation.',
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/auth/mfa/verify',
+    status: 'Implemented',
+    notes: 'Validates OTP and issues JWT access/refresh tokens.',
   },
 ];
 
