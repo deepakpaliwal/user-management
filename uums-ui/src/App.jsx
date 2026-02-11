@@ -107,18 +107,31 @@ function authHeaders(loginResult) {
   return { Authorization: `Bearer ${loginResult.accessToken}` };
 }
 
+function parseJwtPayload(token) {
+  const raw = token?.split('.')?.[1];
+  if (!raw) {
+    return null;
+  }
+
+  const normalized = raw.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+
+  try {
+    return JSON.parse(atob(padded));
+  } catch (_) {
+    return null;
+  }
+}
+
 function roleFromToken(loginResult) {
   if (!loginResult?.accessToken) {
     return null;
   }
-  try {
-    const payload = JSON.parse(atob(loginResult.accessToken.split('.')[1] || ''));
-    const tokenRoles = payload.roles || [];
-    if (Array.isArray(tokenRoles) && tokenRoles.length > 0) {
-      return tokenRoles[0].replace('ROLE_', '').toLowerCase();
-    }
-  } catch (_) {
-    return null;
+
+  const payload = parseJwtPayload(loginResult.accessToken);
+  const tokenRoles = payload?.roles || [];
+  if (Array.isArray(tokenRoles) && tokenRoles.length > 0) {
+    return tokenRoles[0].replace('ROLE_', '').toLowerCase();
   }
   return null;
 }
@@ -154,18 +167,22 @@ export default function App() {
       return;
     }
 
-    const effectiveRole = roleFromToken(loginResult) || selectedRole;
-    if (effectiveRole === 'admin') {
+    const tokenRole = roleFromToken(loginResult);
+    if (!tokenRole) {
+      return;
+    }
+
+    if (tokenRole === 'admin') {
       onLoadAdmin();
       onLoadServices();
       setActiveSection('admin');
       return;
     }
 
-    if (effectiveRole === 'developer' || effectiveRole === 'manager' || effectiveRole === 'support') {
+    if (tokenRole === 'developer' || tokenRole === 'manager') {
       onLoadServices();
     }
-  }, [selectedRole, loginResult]);
+  }, [loginResult]);
 
   const onRegister = async (e) => {
     e.preventDefault();
@@ -193,9 +210,11 @@ export default function App() {
         body: JSON.stringify(loginForm),
       });
       setLoginResult(data);
-      const effectiveRole = roleFromToken(data) || selectedRole;
-      setSelectedRole(effectiveRole);
-      setActiveSection(effectiveRole === 'admin' ? 'admin' : 'stats');
+      const tokenRole = roleFromToken(data);
+      if (tokenRole) {
+        setSelectedRole(tokenRole);
+      }
+      setActiveSection(tokenRole === 'admin' ? 'admin' : 'stats');
     } catch (err) {
       setError(err.message);
     }
