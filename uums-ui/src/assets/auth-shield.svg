@@ -1,0 +1,8 @@
+<svg width="800" height="500" viewBox="0 0 800 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="500" rx="28" fill="#0F172A"/>
+  <circle cx="200" cy="180" r="110" fill="#0EA5E9" fill-opacity="0.18"/>
+  <circle cx="590" cy="300" r="140" fill="#22C55E" fill-opacity="0.14"/>
+  <path d="M400 95L540 150V245C540 315 482 374 400 405C318 374 260 315 260 245V150L400 95Z" fill="#1E293B" stroke="#38BDF8" stroke-width="8"/>
+  <path d="M352 242L384 274L452 206" stroke="#22C55E" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="400" y="455" text-anchor="middle" fill="#E2E8F0" font-size="32" font-family="Arial">Identity + Access</text>
+</svg>
