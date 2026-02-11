@@ -110,6 +110,16 @@ if (!response.ok) throw new Error('Service onboarding failed');
 console.log(await response.json());
 ```
 
+## UI experience
+
+The React homepage now includes:
+
+- Service showcase cards with visuals for auth/admin/analytics.
+- Login/register panel preview.
+- Admin panel and user stats widgets.
+- Role-based quick action buttons (`guest`, `user`, `admin`, `developer`).
+- Developer docs panel linking to Swagger/OpenAPI.
+
 ## Build and test
 
 ```bash
