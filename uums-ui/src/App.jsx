@@ -4,7 +4,7 @@ import adminDashboardImg from './assets/admin-dashboard.svg';
 import authShieldImg from './assets/auth-shield.svg';
 
 const API_BASE = 'http://localhost:8080';
-const roles = ['guest', 'user', 'admin', 'developer'];
+const roles = ['guest', 'user', 'admin', 'developer', 'manager', 'support'];
 
 const services = [
   {
@@ -44,6 +44,16 @@ const roleActions = {
     { label: 'Swagger UI', section: 'docs' },
     { label: 'Service Onboarding', section: 'services' },
     { label: 'Auth Playground', section: 'login' },
+  ],
+  manager: [
+    { label: 'View Team Stats', section: 'stats' },
+    { label: 'Load Users', section: 'admin' },
+    { label: 'Read Docs', section: 'docs' },
+  ],
+  support: [
+    { label: 'Account Recovery', section: 'recovery' },
+    { label: 'Lookup Users', section: 'admin' },
+    { label: 'API Docs', section: 'docs' },
   ],
 };
 
@@ -95,6 +105,10 @@ export default function App() {
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [registerResult, setRegisterResult] = useState(null);
   const [loginResult, setLoginResult] = useState(null);
+  const [recoverySetup, setRecoverySetup] = useState({ username: '', securityQuestion: '', securityAnswer: '' });
+  const [recoveryChallenge, setRecoveryChallenge] = useState({ username: '', securityAnswer: '' });
+  const [recoveryReset, setRecoveryReset] = useState({ challengeId: '', otp: '', newPassword: '' });
+  const [recoveryResult, setRecoveryResult] = useState(null);
   const [error, setError] = useState('');
 
   const [adminUsers, setAdminUsers] = useState([]);
@@ -170,6 +184,53 @@ export default function App() {
         headers: { Authorization: `Bearer ${loginResult?.accessToken || ''}` },
       });
       setServicesData(data);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const onSetupRecovery = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      await callApi('/api/v1/auth/recovery/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(recoverySetup),
+      });
+      setRecoveryResult('Security question saved.');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const onChallengeRecovery = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      const challenge = await callApi('/api/v1/auth/recovery/challenge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(recoveryChallenge),
+      });
+      setRecoveryReset((prev) => ({ ...prev, challengeId: challenge.challengeId, otp: challenge.debugOtp }));
+      setRecoveryResult(`Challenge created. OTP(debug): ${challenge.debugOtp}`);
+      setActiveSection('recovery');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const onResetPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      await callApi('/api/v1/auth/recovery/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(recoveryReset),
+      });
+      setRecoveryResult('Password reset successful. You can login with new password.');
     } catch (err) {
       setError(err.message);
     }
@@ -253,11 +314,43 @@ export default function App() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button className="rounded-lg bg-emerald-600 px-4 py-2 text-sm">Login</button>
-                  <button type="button" className="rounded-lg border border-slate-600 px-4 py-2 text-sm" onClick={() => setActiveSection('docs')}>Forgot Password</button>
+                  <button type="button" className="rounded-lg border border-slate-600 px-4 py-2 text-sm" onClick={() => setActiveSection('recovery')}>Forgot Password</button>
                 </div>
               </form>
 
               {registerResult ? <p className="text-xs text-emerald-300">Registered: token issued ({registerResult.tokenType})</p> : null}
+
+              <div id="recovery" className="space-y-3 rounded-lg border border-slate-700 bg-slate-800/40 p-3">
+                <p className="text-sm text-slate-300">Forgot password recovery</p>
+                <form className="grid gap-2 sm:grid-cols-3" onSubmit={onSetupRecovery}>
+                  <input className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" placeholder="Username"
+                    value={recoverySetup.username} onChange={(e) => setRecoverySetup((v) => ({ ...v, username: e.target.value }))} />
+                  <input className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" placeholder="Security Question"
+                    value={recoverySetup.securityQuestion} onChange={(e) => setRecoverySetup((v) => ({ ...v, securityQuestion: e.target.value }))} />
+                  <input className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" placeholder="Security Answer"
+                    value={recoverySetup.securityAnswer} onChange={(e) => setRecoverySetup((v) => ({ ...v, securityAnswer: e.target.value }))} />
+                  <button className="rounded-lg bg-indigo-700 px-3 py-2 text-sm sm:col-span-3">Setup recovery</button>
+                </form>
+
+                <form className="grid gap-2 sm:grid-cols-3" onSubmit={onChallengeRecovery}>
+                  <input className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" placeholder="Username"
+                    value={recoveryChallenge.username} onChange={(e) => setRecoveryChallenge((v) => ({ ...v, username: e.target.value }))} />
+                  <input className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" placeholder="Security Answer"
+                    value={recoveryChallenge.securityAnswer} onChange={(e) => setRecoveryChallenge((v) => ({ ...v, securityAnswer: e.target.value }))} />
+                  <button className="rounded-lg bg-indigo-600 px-3 py-2 text-sm">Request OTP</button>
+                </form>
+
+                <form className="grid gap-2 sm:grid-cols-3" onSubmit={onResetPassword}>
+                  <input className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" placeholder="Challenge ID"
+                    value={recoveryReset.challengeId} onChange={(e) => setRecoveryReset((v) => ({ ...v, challengeId: e.target.value }))} />
+                  <input className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" placeholder="OTP"
+                    value={recoveryReset.otp} onChange={(e) => setRecoveryReset((v) => ({ ...v, otp: e.target.value }))} />
+                  <input className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" type="password" placeholder="New Password"
+                    value={recoveryReset.newPassword} onChange={(e) => setRecoveryReset((v) => ({ ...v, newPassword: e.target.value }))} />
+                  <button className="rounded-lg bg-emerald-700 px-3 py-2 text-sm sm:col-span-3">Reset password</button>
+                </form>
+                {recoveryResult ? <p className="text-xs text-emerald-300">{recoveryResult}</p> : null}
+              </div>
             </div>
           </Card>
 
