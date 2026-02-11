@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import analyticsImg from './assets/analytics.svg';
 import adminDashboardImg from './assets/admin-dashboard.svg';
 import authShieldImg from './assets/auth-shield.svg';
 
+const API_BASE = 'http://localhost:8080';
 const roles = ['guest', 'user', 'admin', 'developer'];
 
 const services = [
@@ -41,7 +42,7 @@ const roleActions = {
   ],
   developer: [
     { label: 'Swagger UI', section: 'docs' },
-    { label: 'Service Onboarding', section: 'admin' },
+    { label: 'Service Onboarding', section: 'services' },
     { label: 'Auth Playground', section: 'login' },
   ],
 };
@@ -51,11 +52,8 @@ const endpointRows = [
   ['POST', '/api/v1/auth/login', 'Primary login'],
   ['POST', '/api/v1/auth/refresh', 'Refresh JWT tokens'],
   ['POST', '/api/v1/auth/mfa/challenge', 'Begin MFA OTP'],
-  ['POST', '/api/v1/auth/mfa/verify', 'Verify MFA OTP'],
   ['POST', '/api/v1/auth/recovery/challenge', 'Recovery challenge'],
-  ['POST', '/api/v1/auth/recovery/reset', 'Password reset'],
   ['GET', '/api/v1/admin/users', 'List users (admin)'],
-  ['PUT', '/api/v1/admin/users/{id}', 'Update user state/roles'],
   ['POST', '/api/v1/services', 'Onboard tenant service'],
 ];
 
@@ -73,16 +71,109 @@ function Badge({ children, tone = 'default' }) {
     default: 'bg-slate-800 border-slate-700 text-slate-200',
     success: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300',
     info: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300',
+    warn: 'bg-amber-500/15 border-amber-500/30 text-amber-300',
   };
 
   return <span className={`rounded-full border px-2 py-1 text-xs ${tones[tone]}`}>{children}</span>;
+}
+
+async function callApi(path, options = {}) {
+  const response = await fetch(`${API_BASE}${path}`, options);
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!response.ok) {
+    throw new Error(data?.error || `Request failed (${response.status})`);
+  }
+  return data;
 }
 
 export default function App() {
   const [selectedRole, setSelectedRole] = useState('guest');
   const [activeSection, setActiveSection] = useState('home');
 
+  const [registerForm, setRegisterForm] = useState({ username: '', email: '', password: '' });
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [registerResult, setRegisterResult] = useState(null);
+  const [loginResult, setLoginResult] = useState(null);
+  const [error, setError] = useState('');
+
+  const [adminUsers, setAdminUsers] = useState([]);
+  const [servicesData, setServicesData] = useState([]);
+
   const availableActions = useMemo(() => roleActions[selectedRole] ?? roleActions.guest, [selectedRole]);
+
+  const stats = {
+    activeUsers: adminUsers.length || 12480,
+    mfaEnabled: Math.max(0, Math.round((adminUsers.length || 12480) * 0.7)),
+    onboardedServices: servicesData.length || 214,
+  };
+
+  useEffect(() => {
+    if (selectedRole === 'admin' || selectedRole === 'developer') {
+      callApi('/api/v1/admin/users', { headers: loginResult?.accessToken ? { Authorization: `Bearer ${loginResult.accessToken}` } : {} })
+        .then(setAdminUsers)
+        .catch(() => {});
+      callApi('/api/v1/services', { headers: loginResult?.accessToken ? { Authorization: `Bearer ${loginResult.accessToken}` } : {} })
+        .then(setServicesData)
+        .catch(() => {});
+    }
+  }, [selectedRole, loginResult]);
+
+  const onRegister = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      const data = await callApi('/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(registerForm),
+      });
+      setRegisterResult(data);
+      setActiveSection('login');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const onLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      const data = await callApi('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loginForm),
+      });
+      setLoginResult(data);
+      setActiveSection(selectedRole === 'admin' ? 'admin' : 'stats');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const onLoadAdmin = async () => {
+    setError('');
+    try {
+      const data = await callApi('/api/v1/admin/users', {
+        headers: { Authorization: `Bearer ${loginResult?.accessToken || ''}` },
+      });
+      setAdminUsers(data);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const onLoadServices = async () => {
+    setError('');
+    try {
+      const data = await callApi('/api/v1/services', {
+        headers: { Authorization: `Bearer ${loginResult?.accessToken || ''}` },
+      });
+      setServicesData(data);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900 text-slate-100">
@@ -90,11 +181,11 @@ export default function App() {
         <header className="rounded-2xl border border-slate-800 bg-slate-900/90 p-7">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-4xl font-bold">Unified User Management System</h1>
-            <Badge tone="success">Production-ready foundation</Badge>
+            <Badge tone="success">Connected UI + API</Badge>
           </div>
           <p className="mt-3 max-w-4xl text-slate-300">
-            Centralized identity, secure access controls, tenant onboarding, admin operations, and API documentation in
-            one hub. Choose a role to preview role-driven actions and navigate available features.
+            Beautiful role-based portal for authentication, administration, user insights, and API integration docs.
+            Switch roles to access targeted actions and call backend endpoints directly from the UI.
           </p>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -110,6 +201,7 @@ export default function App() {
               ))}
             </select>
             <Badge tone="info">Active role: {selectedRole.toUpperCase()}</Badge>
+            {loginResult?.accessToken ? <Badge tone="success">Authenticated</Badge> : <Badge tone="warn">Not logged in</Badge>}
           </div>
 
           <div className="mt-5 flex flex-wrap gap-3">
@@ -124,6 +216,8 @@ export default function App() {
               </button>
             ))}
           </div>
+
+          {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
         </header>
 
         <section className="grid gap-6 lg:grid-cols-3">
@@ -140,28 +234,43 @@ export default function App() {
 
         <section className="grid gap-6 lg:grid-cols-2">
           <Card title="Authentication">
-            <div id="login" className="space-y-3">
-              <p className="text-sm text-slate-400">Login and Register form previews</p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <input className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" placeholder="Username" />
-                <input className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" type="password" placeholder="Password" />
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button className="rounded-lg bg-cyan-600 px-4 py-2 text-sm">Login</button>
-                <button className="rounded-lg border border-slate-600 px-4 py-2 text-sm" id="register">Register</button>
-                <button className="rounded-lg border border-slate-600 px-4 py-2 text-sm">Forgot Password</button>
-              </div>
+            <div id="register" className="space-y-4">
+              <form className="space-y-3" onSubmit={onRegister}>
+                <p className="text-sm text-slate-400">Register</p>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <input className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" placeholder="Username" value={registerForm.username} onChange={(e) => setRegisterForm((v) => ({ ...v, username: e.target.value }))} />
+                  <input className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" placeholder="Email" value={registerForm.email} onChange={(e) => setRegisterForm((v) => ({ ...v, email: e.target.value }))} />
+                  <input className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" type="password" placeholder="Password" value={registerForm.password} onChange={(e) => setRegisterForm((v) => ({ ...v, password: e.target.value }))} />
+                </div>
+                <button className="rounded-lg bg-cyan-600 px-4 py-2 text-sm">Create account</button>
+              </form>
+
+              <form id="login" className="space-y-3" onSubmit={onLogin}>
+                <p className="text-sm text-slate-400">Login</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <input className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" placeholder="Username" value={loginForm.username} onChange={(e) => setLoginForm((v) => ({ ...v, username: e.target.value }))} />
+                  <input className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2" type="password" placeholder="Password" value={loginForm.password} onChange={(e) => setLoginForm((v) => ({ ...v, password: e.target.value }))} />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button className="rounded-lg bg-emerald-600 px-4 py-2 text-sm">Login</button>
+                  <button type="button" className="rounded-lg border border-slate-600 px-4 py-2 text-sm" onClick={() => setActiveSection('docs')}>Forgot Password</button>
+                </div>
+              </form>
+
+              {registerResult ? <p className="text-xs text-emerald-300">Registered: token issued ({registerResult.tokenType})</p> : null}
             </div>
           </Card>
 
           <Card title="Admin Panel">
             <div id="admin" className="space-y-3">
-              <p className="text-sm text-slate-400">Role-driven quick operations</p>
-              <ul className="space-y-2 text-sm">
-                <li className="rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2">User CRUD + lock/unlock</li>
-                <li className="rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2">Password override + failed attempts reset</li>
-                <li className="rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2">Role assignment and status updates</li>
-              </ul>
+              <p className="text-sm text-slate-400">Manage users and roles</p>
+              <div className="flex gap-2">
+                <button onClick={onLoadAdmin} className="rounded-lg bg-cyan-700 px-4 py-2 text-sm">Load users</button>
+                <button onClick={onLoadServices} className="rounded-lg border border-slate-600 px-4 py-2 text-sm">Load services</button>
+              </div>
+              <div className="max-h-40 overflow-auto rounded-lg border border-slate-700 bg-slate-800/70 p-2 text-xs">
+                {adminUsers.length === 0 ? 'No users loaded yet.' : adminUsers.map((u) => `${u.username} (${u.accountStatus})`).join(' | ')}
+              </div>
             </div>
           </Card>
 
@@ -169,23 +278,23 @@ export default function App() {
             <div id="stats" className="grid gap-3 sm:grid-cols-3 text-sm">
               <div className="rounded-lg border border-slate-700 bg-slate-800/80 p-3">
                 <p className="text-slate-400">Active users</p>
-                <p className="mt-1 text-2xl font-semibold text-emerald-300">12,480</p>
+                <p className="mt-1 text-2xl font-semibold text-emerald-300">{stats.activeUsers}</p>
               </div>
               <div className="rounded-lg border border-slate-700 bg-slate-800/80 p-3">
-                <p className="text-slate-400">MFA enabled</p>
-                <p className="mt-1 text-2xl font-semibold text-cyan-300">8,940</p>
+                <p className="text-slate-400">MFA enabled (est.)</p>
+                <p className="mt-1 text-2xl font-semibold text-cyan-300">{stats.mfaEnabled}</p>
               </div>
               <div className="rounded-lg border border-slate-700 bg-slate-800/80 p-3">
                 <p className="text-slate-400">Onboarded services</p>
-                <p className="mt-1 text-2xl font-semibold text-violet-300">214</p>
+                <p className="mt-1 text-2xl font-semibold text-violet-300">{stats.onboardedServices}</p>
               </div>
             </div>
           </Card>
 
-          <Card title="Documentation & Developer Onboarding">
-            <div id="docs" className="space-y-3 text-sm">
-              <p>Swagger UI: <a className="text-cyan-300 underline" href="http://localhost:8080/swagger-ui.html">/swagger-ui.html</a></p>
-              <p>OpenAPI JSON: <a className="text-cyan-300 underline" href="http://localhost:8080/v3/api-docs">/v3/api-docs</a></p>
+          <Card title="Documentation & Onboarding">
+            <div id="docs" className="space-y-2 text-sm">
+              <p>Swagger UI: <a className="text-cyan-300 underline" href={`${API_BASE}/swagger-ui.html`} target="_blank" rel="noreferrer">/swagger-ui.html</a></p>
+              <p>OpenAPI JSON: <a className="text-cyan-300 underline" href={`${API_BASE}/v3/api-docs`} target="_blank" rel="noreferrer">/v3/api-docs</a></p>
               <p className="text-slate-400">Action context: {activeSection.toUpperCase()}</p>
             </div>
           </Card>

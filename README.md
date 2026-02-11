@@ -39,6 +39,15 @@ Restart:
 - `POST /api/v1/auth/recovery/challenge` and `POST /api/v1/auth/recovery/reset` for security-question + OTP based password recovery.
 - OpenAPI/Swagger docs enabled at `/swagger-ui.html` and `/v3/api-docs`.
 
+## Sample users
+
+Seeded users for local testing (see Liquibase DML):
+
+- `admin_uums` / `SecureAdmin@2026` (ROLE_ADMIN)
+- `test_user_01` / `Password@123` (ROLE_USER)
+- `analytics_user` / `Analytics@123` (ROLE_USER)
+- `dev_portal` / `DevPortal@123` (ROLE_DEVELOPER)
+
 ## API documentation
 
 Once the API is running:
@@ -109,6 +118,14 @@ const response = await fetch('http://localhost:8080/api/v1/services', {
 if (!response.ok) throw new Error('Service onboarding failed');
 console.log(await response.json());
 ```
+
+## Sample tables
+
+Liquibase now provisions and/or seeds the following key tables:
+
+- `uums_user`, `role`, `user_role`
+- `service_application`
+- `user_stat_snapshot`
 
 ## UI experience
 
