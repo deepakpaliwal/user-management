@@ -1,1 +1,49 @@
-# user-management
+# Unified User Management System (UUMS)
+
+Initial project scaffold for a multi-module user-management platform:
+
+- `uums-api`: Spring Boot API (Security, OAuth2 resource server, Liquibase, JPA).
+- `uums-batch`: Spring Batch job runner for analytics/reporting pipelines.
+- `uums-ui`: React + Tailwind UI starter.
+- `memory`: Daily development worklogs with chronological timestamped updates.
+- `scripts`: Local lifecycle helpers.
+
+## Quick start
+
+```bash
+./scripts/start.sh
+```
+
+Stop:
+
+```bash
+./scripts/stop.sh
+```
+
+Restart:
+
+```bash
+./scripts/restart.sh
+```
+
+## Implemented in current iteration
+
+- `POST /api/v1/auth/register` with Bean Validation for username/email/password and default `ROLE_USER` assignment.
+- `POST /api/v1/auth/login` with account lockout after configurable failed-attempt threshold.
+- `POST /api/v1/auth/refresh` to rotate access/refresh JWT tokens.
+- JWT token issuance (HS256) and Spring Security JWT resource-server verification.
+- In-memory login rate limiting filter per client IP.
+- `POST /api/v1/services` and `GET /api/v1/services` for initial tenant onboarding and API key generation.
+- `GET/PUT/DELETE /api/v1/admin/users` plus `GET /api/v1/admin/users/{userId}` for admin user CRUD, account state updates, password overrides, and role assignment.
+- `POST /api/v1/auth/mfa/challenge` and `POST /api/v1/auth/mfa/verify` for two-step authentication via OTP challenge.
+- `POST /api/v1/auth/recovery/challenge` and `POST /api/v1/auth/recovery/reset` for security-question + OTP based password recovery.
+
+## Build and test
+
+```bash
+mvn test
+```
+
+## Worklog policy
+
+A new file is created per day under `memory/` with ISO date naming, and entries are appended with timestamps in chronological order.
