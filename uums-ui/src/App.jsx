@@ -9,6 +9,7 @@ const completedBackendFeatures = [
   'Admin user management APIs (list/get/update/delete + role assignment)',
   'MFA challenge + OTP verification endpoints for two-step auth',
   'Account recovery via security-question + OTP reset flow',
+  'OpenAPI documentation via Swagger UI and /v3/api-docs',
 ];
 
 const upcomingFeatures = [
@@ -149,6 +150,18 @@ export default function App() {
             </ul>
           </SectionCard>
         </div>
+
+
+        <SectionCard title="Developer docs" subtitle="Interactive API references now available">
+          <ul className="space-y-2 text-sm">
+            <li className="rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2">
+              <span className="font-mono text-cyan-200">Swagger UI</span>: <span className="text-slate-300">/swagger-ui.html</span>
+            </li>
+            <li className="rounded-lg border border-slate-700 bg-slate-800/80 px-3 py-2">
+              <span className="font-mono text-cyan-200">OpenAPI JSON</span>: <span className="text-slate-300">/v3/api-docs</span>
+            </li>
+          </ul>
+        </SectionCard>
 
         <SectionCard title="Auth API status board" subtitle="Endpoints currently exposed by the backend">
           <div className="overflow-x-auto">
