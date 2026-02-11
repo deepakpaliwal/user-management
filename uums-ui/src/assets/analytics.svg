@@ -1,0 +1,14 @@
+<svg width="800" height="500" viewBox="0 0 800 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="500" rx="28" fill="#0B1220"/>
+  <path d="M90 390H710" stroke="#334155" stroke-width="6"/>
+  <path d="M130 360L250 290L360 320L470 210L610 130" stroke="#38BDF8" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="130" cy="360" r="10" fill="#38BDF8"/>
+  <circle cx="250" cy="290" r="10" fill="#38BDF8"/>
+  <circle cx="360" cy="320" r="10" fill="#38BDF8"/>
+  <circle cx="470" cy="210" r="10" fill="#38BDF8"/>
+  <circle cx="610" cy="130" r="10" fill="#38BDF8"/>
+  <rect x="120" y="120" width="120" height="220" rx="10" fill="#22C55E" fill-opacity="0.3"/>
+  <rect x="280" y="180" width="120" height="160" rx="10" fill="#22C55E" fill-opacity="0.3"/>
+  <rect x="440" y="140" width="120" height="200" rx="10" fill="#22C55E" fill-opacity="0.3"/>
+  <text x="400" y="460" text-anchor="middle" fill="#E2E8F0" font-size="30" font-family="Arial">Traffic Analytics</text>
+</svg>
