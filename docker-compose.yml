@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: uums_local
+      POSTGRES_USER: uums
+      POSTGRES_PASSWORD: uums
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  uums-api:
+    build:
+      context: .
+      dockerfile: uums-api/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+  uums-batch:
+    build:
+      context: .
+      dockerfile: uums-batch/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+
+  uums-ui:
+    build:
+      context: ./uums-ui
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - uums-api
+
+volumes:
+  postgres_data:
