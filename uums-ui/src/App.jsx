@@ -8,11 +8,12 @@ const completedBackendFeatures = [
   'Tenant service onboarding with generated API keys and tier limits',
   'Admin user management APIs (list/get/update/delete + role assignment)',
   'MFA challenge + OTP verification endpoints for two-step auth',
+  'Account recovery via security-question + OTP reset flow',
 ];
 
 const upcomingFeatures = [
   'OAuth social login providers (Google, Meta, Microsoft)',
-  'MFA via OTP/security questions',
+  'Security question management UI + full self-service recovery screens',
   'Admin dashboard UI screens for user CRUD and role workflows',
   'Complete API key lifecycle actions (rotate/revoke)',
   'Traffic analytics and alerting views',
@@ -72,6 +73,18 @@ const apiEndpoints = [
     path: '/api/v1/auth/mfa/verify',
     status: 'Implemented',
     notes: 'Validates OTP and issues JWT access/refresh tokens.',
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/auth/recovery/challenge',
+    status: 'Implemented',
+    notes: 'Validates security answer and sends OTP challenge.',
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/auth/recovery/reset',
+    status: 'Implemented',
+    notes: 'Resets password using challengeId + OTP + new password.',
   },
 ];
 

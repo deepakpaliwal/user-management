@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/sql/002_seed_users.sql
   - include:
       file: db/changelog/sql/003_create_service_application.sql
+  - include:
+      file: db/changelog/sql/004_add_security_question_columns.sql

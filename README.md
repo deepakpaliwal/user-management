@@ -36,6 +36,7 @@ Restart:
 - `POST /api/v1/services` and `GET /api/v1/services` for initial tenant onboarding and API key generation.
 - `GET/PUT/DELETE /api/v1/admin/users` plus `GET /api/v1/admin/users/{userId}` for admin user CRUD, account state updates, password overrides, and role assignment.
 - `POST /api/v1/auth/mfa/challenge` and `POST /api/v1/auth/mfa/verify` for two-step authentication via OTP challenge.
+- `POST /api/v1/auth/recovery/challenge` and `POST /api/v1/auth/recovery/reset` for security-question + OTP based password recovery.
 
 ## Build and test
 

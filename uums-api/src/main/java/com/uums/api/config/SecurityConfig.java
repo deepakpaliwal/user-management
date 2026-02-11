@@ -24,6 +24,9 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/mfa/challenge",
                                 "/api/v1/auth/mfa/verify",
+                                "/api/v1/auth/recovery/setup",
+                                "/api/v1/auth/recovery/challenge",
+                                "/api/v1/auth/recovery/reset",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**")
                         .permitAll()

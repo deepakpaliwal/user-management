@@ -27,6 +27,8 @@ uums:
       window-seconds: 60
     mfa:
       challenge-ttl-seconds: 300
+    recovery:
+      challenge-ttl-seconds: 300
 
 server:
   port: 8080

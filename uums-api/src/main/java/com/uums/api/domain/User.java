@@ -47,6 +47,12 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "security_question", length = 255)
+    private String securityQuestion;
+
+    @Column(name = "security_answer_hash", length = 255)
+    private String securityAnswerHash;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_role",
@@ -77,5 +83,10 @@ public class User {
     public void setAccountStatus(AccountStatus accountStatus) { this.accountStatus = accountStatus; }
     public int getFailedLoginAttempts() { return failedLoginAttempts; }
     public void setFailedLoginAttempts(int failedLoginAttempts) { this.failedLoginAttempts = failedLoginAttempts; }
+
+    public String getSecurityQuestion() { return securityQuestion; }
+    public void setSecurityQuestion(String securityQuestion) { this.securityQuestion = securityQuestion; }
+    public String getSecurityAnswerHash() { return securityAnswerHash; }
+    public void setSecurityAnswerHash(String securityAnswerHash) { this.securityAnswerHash = securityAnswerHash; }
     public Set<Role> getRoles() { return roles; }
 }
