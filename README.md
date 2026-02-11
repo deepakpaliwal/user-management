@@ -33,6 +33,7 @@ Restart:
 - `POST /api/v1/auth/refresh` to rotate access/refresh JWT tokens.
 - JWT token issuance (HS256) and Spring Security JWT resource-server verification.
 - In-memory login rate limiting filter per client IP.
+- `POST /api/v1/services` and `GET /api/v1/services` for initial tenant onboarding and API key generation.
 
 ## Build and test
 

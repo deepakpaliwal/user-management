@@ -5,13 +5,14 @@ const completedBackendFeatures = [
   'JWT access + refresh issuance with token-type checks',
   'Per-IP login rate limiting',
   'Liquibase schema + seed data for users/roles',
+  'Tenant service onboarding with generated API keys and tier limits',
 ];
 
 const upcomingFeatures = [
   'OAuth social login providers (Google, Meta, Microsoft)',
   'MFA via OTP/security questions',
   'Admin dashboard (user CRUD + role assignments)',
-  'Tenant onboarding + API key lifecycle',
+  'Complete API key lifecycle actions (rotate/revoke)',
   'Traffic analytics and alerting views',
 ];
 
@@ -33,6 +34,18 @@ const apiEndpoints = [
     path: '/api/v1/auth/refresh',
     status: 'Implemented',
     notes: 'Rotates tokens using refresh JWT.',
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/services',
+    status: 'Implemented',
+    notes: 'Onboards a tenant service and generates API key.',
+  },
+  {
+    method: 'GET',
+    path: '/api/v1/services',
+    status: 'Implemented',
+    notes: 'Lists onboarded services with tier and limits.',
   },
 ];
 
