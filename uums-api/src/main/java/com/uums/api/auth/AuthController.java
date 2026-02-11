@@ -2,6 +2,7 @@ package com.uums.api.auth;
 
 import com.uums.api.auth.dto.AuthResponse;
 import com.uums.api.auth.dto.LoginRequest;
+import com.uums.api.auth.dto.RefreshTokenRequest;
 import com.uums.api.auth.dto.RegisterRequest;
 import com.uums.api.service.AuthService;
 import jakarta.validation.Valid;
@@ -31,5 +32,10 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/refresh")
+    public AuthResponse refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return authService.refresh(request);
     }
 }

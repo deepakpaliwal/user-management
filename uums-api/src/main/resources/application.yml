@@ -20,6 +20,7 @@ uums:
     jwt:
       secret: "ReplaceThisWithAtLeast32CharSecretKey123456"
       expiration-seconds: 3600
+      refresh-expiration-seconds: 1209600
     max-failed-attempts: 5
     rate-limit:
       max-requests: 30

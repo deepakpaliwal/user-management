@@ -3,6 +3,7 @@ package com.uums.api.service;
 import com.uums.api.auth.AuthException;
 import com.uums.api.auth.dto.AuthResponse;
 import com.uums.api.auth.dto.LoginRequest;
+import com.uums.api.auth.dto.RefreshTokenRequest;
 import com.uums.api.auth.dto.RegisterRequest;
 import com.uums.api.domain.AccountStatus;
 import com.uums.api.domain.Role;
@@ -10,6 +11,7 @@ import com.uums.api.domain.User;
 import com.uums.api.repository.RoleRepository;
 import com.uums.api.repository.UserRepository;
 import com.uums.api.security.JwtService;
+import io.jsonwebtoken.JwtException;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -85,9 +87,25 @@ public class AuthService {
         return buildTokenResponse(user);
     }
 
+    @Transactional(readOnly = true)
+    public AuthResponse refresh(RefreshTokenRequest request) {
+        try {
+            String username = jwtService.extractSubjectFromRefreshToken(request.refreshToken());
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new AuthException("Invalid refresh token"));
+            if (user.getAccountStatus() != AccountStatus.ACTIVE) {
+                throw new AuthException("Account is not active");
+            }
+            return buildTokenResponse(user);
+        } catch (JwtException ex) {
+            throw new AuthException("Invalid refresh token");
+        }
+    }
+
     private AuthResponse buildTokenResponse(User user) {
         Set<String> roles = user.getRoles().stream().map(Role::getRoleCode).collect(Collectors.toSet());
-        String token = jwtService.generateToken(user.getUsername(), Map.of("roles", roles));
-        return new AuthResponse(token, jwtService.getExpirationSeconds(), "Bearer", roles);
+        String accessToken = jwtService.generateAccessToken(user.getUsername(), Map.of("roles", roles));
+        String refreshToken = jwtService.generateRefreshToken(user.getUsername());
+        return new AuthResponse(accessToken, refreshToken, jwtService.getAccessExpirationSeconds(), "Bearer", roles);
     }
 }

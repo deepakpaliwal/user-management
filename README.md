@@ -30,6 +30,7 @@ Restart:
 
 - `POST /api/v1/auth/register` with Bean Validation for username/email/password and default `ROLE_USER` assignment.
 - `POST /api/v1/auth/login` with account lockout after configurable failed-attempt threshold.
+- `POST /api/v1/auth/refresh` to rotate access/refresh JWT tokens.
 - JWT token issuance (HS256) and Spring Security JWT resource-server verification.
 - In-memory login rate limiting filter per client IP.
 
