@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/sql/001_create_users_and_roles.sql
+  - include:
+      file: db/changelog/sql/002_seed_users.sql
+  - include:
+      file: db/changelog/sql/003_create_service_application.sql
+  - include:
+      file: db/changelog/sql/004_add_security_question_columns.sql
+  - include:
+      file: db/changelog/sql/005_seed_sample_services_and_stats.sql
+  - include:
+      file: db/changelog/sql/006_app2app_keys_traffic_stats.sql
