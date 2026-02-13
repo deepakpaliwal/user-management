@@ -9,3 +9,5 @@ databaseChangeLog:
       file: db/changelog/sql/004_add_security_question_columns.sql
   - include:
       file: db/changelog/sql/005_seed_sample_services_and_stats.sql
+  - include:
+      file: db/changelog/sql/006_app2app_keys_traffic_stats.sql
